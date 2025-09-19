@@ -6,6 +6,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Update package list and install basic dependencies
 RUN apt-get update && apt-get install -y \
     git \
+    vim \
+    net-tools\
+    netcat\
     && rm -rf /var/lib/apt/lists/*
 
 #RISC-V GNU toolchain build deps
@@ -68,6 +71,20 @@ RUN riscv64-unknown-elf-gcc -o hello hello.c
 
 #Do not consider depenedencies up to this point, RISCV toolchain is probably already present in cnodes.
 
+#OpenOCD is required to debug spike runnable elf with gdb 
+ENV OPENOCD="/opt/openocd"
+ENV OPENOCD_REVISION="9ea7f3d647c8ecf6b0f1424002dfc3f4504a162c"
+# openocd dependencies
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  openocd\ 
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+
+ 
+
+
+
 #SPIKE toolchain build deps (todo: versioning of third party)
 RUN apt-get update && apt-get install -y \
     python3-venv \
@@ -91,17 +108,23 @@ RUN --mount=type=secret,id=ssh_key,dst=/root/.ssh/id_rsa \
     ssh-add /root/.ssh/id_rsa &&\
     ls -la ~/.ssh/ && \
     ssh-add -l  &&\
-    git clone  git@github.com:axelera-ai/tools.riscv-isa-sim.git  /spike/tools.riscv.isa-sim
+    git clone   git@github.com:axelera-ai/tools.riscv-isa-sim.git  /spike/tools.riscv.isa-sim
 
 
 WORKDIR /spike/tools.riscv.isa-sim
 RUN ls -la
+
+#Install dependencies
 RUN ./docker-images/ubuntu/Docker/common-scripts/install-pipx-and-python-utilities.sh 
 RUN ./docker-images/ubuntu/Docker/common-scripts/install-ninja.sh
 RUN ./docker-images/ubuntu/Docker/common-scripts/install-ccache.sh
 RUN ./docker-images/ubuntu/Docker/common-scripts/install-cmake.sh
-RUN make build-Release
+
+#Build with debugging symbols and no build optimization
+RUN make CFLAGS="-g -O0" CXXFLAGS="-g -O0" build-Release  
 RUN make install-Release
+
+#Test run
 RUN ./install-Release/bin/ax-accel-sim run-elf  --generation EUROPA  axelera/tests/apps/test_conv_identity_pt_struct_ai0
 
 #(TODO: Verify what is required to install in a different directory e.g /usr/bin)
