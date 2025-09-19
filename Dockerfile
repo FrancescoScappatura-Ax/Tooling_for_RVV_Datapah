@@ -53,7 +53,7 @@ WORKDIR /tmp/riscv-gnu-toolchain
 
 # Configure and build the toolchain with newlib
 RUN ./configure --prefix=$RISCV 
-RUN make -j32 #remove32
+RUN make -j$(nproc)
 
 # Create a simple hello world program to test riscv toolchain
 WORKDIR /app_test_riscv_toolchain
@@ -75,14 +75,37 @@ RUN riscv64-unknown-elf-gcc -o hello hello.c
 ENV OPENOCD="/opt/openocd"
 ENV OPENOCD_REVISION="9ea7f3d647c8ecf6b0f1424002dfc3f4504a162c"
 # openocd dependencies
+
+# openocd dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
-  openocd\ 
+    autoconf \
+    automake \
+    autotools-dev \
+    texinfo \
+    libtool \
+    pkg-config \
+    libusb-1.0-0-dev \
+    libftdi1-dev \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+# Build openocd from source
+WORKDIR /usr/src/openocd
+RUN \
+    git init . \
+    && git remote add origin https://github.com/riscv/riscv-openocd.git \
+    && git fetch origin --depth=1 "${OPENOCD_REVISION}" \
+    && git reset --hard FETCH_HEAD \
+    && git submodule update --init \
+    && export MAKEFLAGS="-j$(nproc)" \
+    && ./bootstrap \
+    && ./configure --prefix="${OPENOCD}" --enable-remote-bitbang --enable-ftdi \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -rf openocd
 
- 
-
+ENV PATH="${PATH}:${OPENOCD}/bin"
 
 
 #SPIKE toolchain build deps (todo: versioning of third party)

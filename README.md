@@ -26,18 +26,29 @@ Limitation:
 -No easy way to perform memory manipulation 
 -No easy way to insert source level breakpoint 
 
-#### Debug with gdb
+#### Debug with gdb and openocd (v 0.11.0 default for linux 22.04)
 
 Run spike instance
-`./install-Release/bin/ax-accel-sim   run-elf  --spike-args "-H --rbb-port=9824"  --generation EUROPA  axelera/tests/apps/test_conv_identity_pt_struct_ai00`
+`./install-Release/bin/ax-accel-sim   run-elf  --spike-args "-H --rbb-port=9824"  --generation EUROPA  axelera/tests/apps/test_conv_identity_pt_struct_ai0`
 
 Run openocd in another docker container terminal 
 `openocd -f Tooling_for_RVV_Datapah/openocd0.11_spike.cfg`
 
 Run gdb in another docker container terminal 
-`riscv64-unknown-elf-gdb  axelera/tests/apps/test_conv_identity_pt_struct_ai0g`
+`riscv64-unknown-elf-gdb  axelera/tests/apps/test_conv_identity_pt_struct_ai00`
 
 
+#### Debug with gdb and openocd (custom version sw team) https://github.com/axelera-ai/tools.riscv-isa-sim/blob/axelera/main/docker-images/ubuntu/Docker/Dockerfile
+
+
+Run spike instance
+`./install-Release/bin/ax-accel-sim   run-elf  --spike-args "-H --rbb-port=9824"  --generation EUROPA  axelera/tests/apps/test_conv_identity_pt_struct_ai0`
+
+Run openocd in another docker container terminal 
+`openocd -f Tooling_for_RVV_Datapah/openocd0.12_spike.cfg`
+
+Run gdb in another docker container terminal 
+`riscv64-unknown-elf-gdb  axelera/tests/apps/test_conv_identity_pt_struct_ai00`
 
 
 
